@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 });
 
+
 function GetCurrentWeather(API_key) {
     console.log(API_key)
     fetch(`http://api.weatherapi.com/v1/current.json?key=${API_key}&q=London`)
@@ -14,7 +15,8 @@ function GetCurrentWeather(API_key) {
         if (response.ok){ // handle response 200
             return response.json()
             .then(data => {
-                document.querySelector("#temperature_now").innerHTML = `${data.current.temp_c}°C` //change current temperature
+                document.querySelector("#temperature_now").innerHTML = `${data.current.temp_c}°C`; //change current temperature
+                SetWeatherIcon(data);
             })
         } else { //handle case when response 200 not received
             return response.json()
@@ -24,4 +26,11 @@ function GetCurrentWeather(API_key) {
         }
     })
     .catch(error => console.log("Connection error"))
+}
+
+function SetWeatherIcon(current_weather) {
+    ImageDOM = document.querySelector("#weather_image");
+    ImageDOM.src = `http:${current_weather.current.condition.icon}`;
+    ImageDOM.height = "200";
+    ImageDOM.width = "200";
 }
