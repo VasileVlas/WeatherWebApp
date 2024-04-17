@@ -12,3 +12,7 @@
     border-radius: 2rem;
     margin-bottom: 30px;
 }
+
+#temperature_now{
+    font-size: 80px;
+}
