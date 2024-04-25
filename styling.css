@@ -16,3 +16,13 @@
 #temperature_now{
     font-size: 80px;
 }
+
+.hour_image {
+    height: 70px;
+    width: 70px;
+}
+
+#weather_image {
+    height: 160px;
+    width: 160px;
+}

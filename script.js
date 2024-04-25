@@ -4,9 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector("#button-addon2").addEventListener("click", () => {
         const API_key = "5xU8FaX7CHFfRzk2UIUg7humtNxQI6tf"
         const location = GetUserLocation();
+        //checks if user entered a location
+        if (location === "") {
+            alert("Please, enter location!")
+            return
+            
+        }
         SetCurrentWeather(API_key, location);
-        //SetHourlyForecast(API_key,location);
-        //GetHourForecast(API_key)
+        SetHourlyForecast(API_key, location);
     });
 });
 
@@ -39,18 +44,37 @@ async function SetCurrentWeather(API_key, location) {
     const URL = `https://api.tomorrow.io/v4/weather/realtime?location=${location}&apikey=${API_key}`;
     const data = await APICall(URL);
     document.querySelector("#temperature_now").innerHTML = `${Math.round(data.data.values.temperature)}°C`; //change current temperature in html object
-    SetWeatherIcon(data.data);
+    ImageDOM = document.querySelector("#weather_image");
+    ImageDOM.src = GetWeatherIconSource(data.data);
+    ;
 
 }
 
 async function SetHourlyForecast(API_key, location) {
-    const URL = `https://api.tomorrow.io/v4/weather/realtime?location=${location}&apikey=${API_key}`;
+    const URL = `https://api.tomorrow.io/v4/weather/forecast?location=${location}&timesteps=1h&&apikey=${API_key}`;
     const data = await APICall(URL);
-    console.log(data);
+    for (let time_diff = 1; time_diff < 6; time_diff++) {
+        hour_forecast = data.timelines.hourly[time_diff];
+
+        //update temperature
+        document.querySelector(`#hour${time_diff}_temp`).innerHTML = `${Math.round(hour_forecast.values.temperature)}°C`;
+
+        // update image
+        ImageDOM = document.querySelector(`#hour${time_diff}_cond`);
+        ImageDOM.src = GetWeatherIconSource(hour_forecast);
+
+        //update timeline '2024-04-25T18:00:00Z'
+        let date = hour_forecast.time;
+        let time = date.split("T");
+        time = time[1].replace("Z", "");
+        time = time.split(":");
+        document.querySelector(`#hour${time_diff}_time`).innerHTML = `${time[0]}:${time[1]}`;
+    } 
+    
 }
 
 //Based on weather code from API sets the appropriate weather condition image
-function SetWeatherIcon(data) {
+function GetWeatherIconSource(data) {
     weather_code = data.values.weatherCode
     switch (String(data.values.weatherCode)) {
 
@@ -100,9 +124,5 @@ function SetWeatherIcon(data) {
         default:
             console.log("Set Icon Error")
     }
-
-    ImageDOM = document.querySelector("#weather_image");
-    ImageDOM.src = source;
-    ImageDOM.height = "200";
-    ImageDOM.width = "200";
+    return source
 }
