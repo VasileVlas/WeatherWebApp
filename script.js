@@ -11,7 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
             
         }
         SetCurrentWeather(API_key, location);
-        SetHourlyForecast(API_key, location);
+        //SetHourlyForecast(API_key, location);
+        SetForecast(API_key, location, "1h");
+        SetForecast(API_key, location, "1d")
     });
 });
 
@@ -73,10 +75,61 @@ async function SetHourlyForecast(API_key, location) {
     
 }
 
+async function SetForecast(API_key, location, timesteps) {
+    const URL = `https://api.tomorrow.io/v4/weather/forecast?location=${location}&timesteps=${timesteps}&&apikey=${API_key}`;
+    const data = await APICall(URL);
+    for (let time_diff = 1; time_diff < 6; time_diff++) {
+        let time = "0"
+
+        if (timesteps === "1h") {
+            forecast = data.timelines.hourly[time_diff];
+            let date = forecast.time;
+            time = date.split("T");
+            time = time[1].replace("Z", "");
+            time = time.split(":");
+
+            //update temperature
+            document.querySelector(`#hour${time_diff}_temp`).innerHTML = `${Math.round(forecast.values.temperature)}°C`;
+
+            // update image
+            ImageDOM = document.querySelector(`#hour${time_diff}_cond`);
+            ImageDOM.src = GetWeatherIconSource(forecast.values.weatherCode);
+
+            //update timeline '2024-04-25T18:00:00Z'
+            document.querySelector(`#hour${time_diff}_time`).innerHTML = `${time[0]}:${time[1]}`;
+        }
+        else if (timesteps === "1d") {
+            time_diff = time_diff - 1
+            forecast = data.timelines.daily[time_diff];
+            let date = forecast.time;
+            time = date.split("T");
+            time = time[0]
+            time = time.split("-");
+            tag_to_set = "day"
+            console.log(Math.round(forecast.values.temperatureAvg));
+
+            //update temperature
+            document.querySelector(`#day${time_diff}_temp`).innerHTML = `${Math.round(forecast.values.temperatureAvg)}°C`;
+
+            // update image
+            ImageDOM = document.querySelector(`#day${time_diff}_cond`);
+            ImageDOM.src = GetWeatherIconSource(forecast.values.weatherCodeMax);
+
+            //update timeline '2024-04-25T18:00:00Z'
+            document.querySelector(`#day${time_diff}_time`).innerHTML = `${time[3]}/${time[2]}`;
+        }
+        else {
+            throw new Error("Forecast error")
+        }
+
+
+    } 
+    
+}
+
 //Based on weather code from API sets the appropriate weather condition image
-function GetWeatherIconSource(data) {
-    weather_code = data.values.weatherCode
-    switch (String(data.values.weatherCode)) {
+function GetWeatherIconSource(weather_code) {
+    switch (String(weather_code)) {
 
         //sunny
         case "1000":
