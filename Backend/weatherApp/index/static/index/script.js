@@ -43,40 +43,19 @@ function GetUserLocation() {
 }
 
 async function SetCurrentWeather(API_key, location) {
-    const URL = `https://api.tomorrow.io/v4/weather/realtime?location=${location}&apikey=${API_key}`;
+    const URL = `http://192.168.1.112:8000/api/currentweather/${location}`
+    //const URL = `https://api.tomorrow.io/v4/weather/realtime?location=${location}&apikey=${API_key}`;
     const data = await APICall(URL);
-    document.querySelector("#temperature_now").innerHTML = `${Math.round(data.data.values.temperature)}°C`; //change current temperature in html object
+    document.querySelector("#temperature_now").innerHTML = `${Math.round(data.temperature)}°C`; //change current temperature in html object
     ImageDOM = document.querySelector("#weather_image");
+    console.log(data.weathercode)
     try {
-    ImageDOM.src = GetWeatherIconSource(data.data);
+    ImageDOM.src = GetWeatherIconSource(data.weathercode);
     }
     catch {
         console.error(error);
     }
 
-}
-
-async function SetHourlyForecast(API_key, location) {
-    const URL = `https://api.tomorrow.io/v4/weather/forecast?location=${location}&timesteps=1h&&apikey=${API_key}`;
-    const data = await APICall(URL);
-    for (let time_diff = 1; time_diff < 6; time_diff++) {
-        hour_forecast = data.timelines.hourly[time_diff];
-
-        //update temperature
-        document.querySelector(`#hour${time_diff}_temp`).innerHTML = `${Math.round(hour_forecast.values.temperature)}°C`;
-
-        // update image
-        ImageDOM = document.querySelector(`#hour${time_diff}_cond`);
-        ImageDOM.src = GetWeatherIconSource(hour_forecast);
-
-        //update timeline '2024-04-25T18:00:00Z'
-        let date = hour_forecast.time;
-        let time = date.split("T");
-        time = time[1].replace("Z", "");
-        time = time.split(":");
-        document.querySelector(`#hour${time_diff}_time`).innerHTML = `${time[0]}:${time[1]}`;
-    } 
-    
 }
 
 async function SetForecast(API_key, location, timesteps) {
@@ -188,6 +167,7 @@ function GetWeatherIconSource(weather_code) {
             break;
         
         default:
+            console.log(weather_code)
             console.log("Set Icon Error")
     }
     return source
