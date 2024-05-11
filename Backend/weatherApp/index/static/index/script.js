@@ -1,19 +1,30 @@
 document.addEventListener("DOMContentLoaded", () => {
     //document.querySelector("#temperature_now").innerHTML = "0"
     
-    document.querySelector("#button-addon2").addEventListener("click", () => {
+    //document.querySelectorAll("#location_input").addEventListener("")
+
+    document.querySelector("#button-addon2").addEventListener("click", async () => {
         const API_key = "5xU8FaX7CHFfRzk2UIUg7humtNxQI6tf"
         const location = GetUserLocation();
         //checks if user entered a location
         if (location === "") {
             alert("Please, enter location!")
             return
+        }
+
+        try {
+            await Promise.all([
+                SetCurrentWeather(API_key, location),
+                //SetHourlyForecast(API_key, location);
+                SetForecast(API_key, location, "1h"),
+                SetForecast(API_key, location, "1d")
+            ]);
             
         }
-        SetCurrentWeather(API_key, location);
-        //SetHourlyForecast(API_key, location);
-        SetForecast(API_key, location, "1h");
-        SetForecast(API_key, location, "1d")
+        catch(error) {
+            alert(error.message);
+        }
+        
     });
 });
 
@@ -29,11 +40,11 @@ function APICall(URL) {
             } else { //handle case when response 200 not received
                 return response.json()
                 .then(error => { //Prompt user with error message
-                    alert(error.error.message)
+                    alert(error.error.message);
                 })
             }
         })
-        .catch(error => console.log("Connection error"))
+        .catch(error => console.log("Connection error"));
     return weather_data
 }
 
@@ -43,79 +54,68 @@ function GetUserLocation() {
 }
 
 async function SetCurrentWeather(API_key, location) {
-    const URL = `http://192.168.1.112:8000/api/currentweather/${location}`
+    const URL = `http://192.168.1.116:8000/api/currentweather/${location}`
     //const URL = `https://api.tomorrow.io/v4/weather/realtime?location=${location}&apikey=${API_key}`;
     const data = await APICall(URL);
+    CheckWrongLocationError(data);
     document.querySelector("#temperature_now").innerHTML = `${Math.round(data.temperature)}°C`; //change current temperature in html object
     ImageDOM = document.querySelector("#weather_image");
-    console.log(data.weathercode)
     try {
     ImageDOM.src = GetWeatherIconSource(data.weathercode);
     }
     catch {
-        console.error(error);
+        throw new Error("Error while setting icon in SetCurrentWeather function");
     }
 
 }
 
 async function SetForecast(API_key, location, timesteps) {
-    const URL = `https://api.tomorrow.io/v4/weather/forecast?location=${location}&timesteps=${timesteps}&&apikey=${API_key}`;
+    const URL = `http://192.168.1.116:8000/api/forecast/${location}/${timesteps}`
+    //const URL = `https://api.tomorrow.io/v4/weather/forecast?location=${location}&timesteps=${timesteps}&&apikey=${API_key}`;
     const data = await APICall(URL);
-    for (let time_diff = 1; time_diff < 6; time_diff++) {
-        let time = "0"
+    CheckWrongLocationError(data);
+    let iter = 0
+    data.data.forEach((timestep_data) => {
+        iter++
         if (timesteps === "1h") {
-            forecast = data.timelines.hourly[time_diff];
-            let date = forecast.time;
-            time = date.split("T");
-            time = time[1].replace("Z", "");
-            time = time.split(":");
 
             //update temperature
-            document.querySelector(`#hour${time_diff}_temp`).innerHTML = `${Math.round(forecast.values.temperature)}°C`;
+            document.querySelector(`#hour${iter}_temp`).innerHTML = `${Math.round(timestep_data.temperature)}°C`;
 
             // update image
-            ImageDOM = document.querySelector(`#hour${time_diff}_cond`);
+            ImageDOM = document.querySelector(`#hour${iter}_cond`);
             try {
-                ImageDOM.src = GetWeatherIconSource(forecast.values.weatherCode);
+                ImageDOM.src = GetWeatherIconSource(timestep_data.weathercode);
             }
             catch {
-                console.error(error);
-                break;
+                throw new Error("Error while setting icon in SetForecast function")
             }
             //update timeline '2024-04-25T18:00:00Z'
-            document.querySelector(`#hour${time_diff}_time`).innerHTML = `${time[0]}:${time[1]}`;
+            document.querySelector(`#hour${iter}_time`).innerHTML = `${timestep_data.time[0]}:${timestep_data.time[1]}`;
         }
         else if (timesteps === "1d") {
-            
-            //time_diff = time_diff - 1
-            forecast = data.timelines.daily[time_diff-1];
-            let date = forecast.time;
-            time = date.split("T");
-            time = time[0]
-            time = time.split("-");
-            tag_to_set = "day"
+            //subtractiong one from iter because day numbering starts from 0
 
             //update temperature
-            document.querySelector(`#day${time_diff-1}_temp`).innerHTML = `${Math.round(forecast.values.temperatureAvg)}°C`;
+            document.querySelector(`#day${iter-1}_temp`).innerHTML = `${Math.round(timestep_data.temperature)}°C`;
 
             // update image
-            ImageDOM = document.querySelector(`#day${time_diff-1}_cond`);
+            ImageDOM = document.querySelector(`#day${iter-1}_cond`);
             try {
-                ImageDOM.src = GetWeatherIconSource(forecast.values.weatherCodeMax);
+                ImageDOM.src = GetWeatherIconSource(timestep_data.weathercode);
             }
             catch {
-                console.error(error)
-                break;
+                throw new Error("Error while setting icon in SetForecast function")
             }
             //update timeline '2024-04-25T18:00:00Z'
-            document.querySelector(`#day${time_diff-1}_time`).innerHTML = `${time[2]}/${time[1]}`;
+            document.querySelector(`#day${iter-1}_time`).innerHTML = `${timestep_data.time[2]}/${timestep_data.time[1]}`;
         }
         else {
             throw new Error("Forecast error")
         }
 
 
-    } 
+    }, timesteps)
     
 }
 
@@ -171,4 +171,10 @@ function GetWeatherIconSource(weather_code) {
             console.log("Set Icon Error")
     }
     return source
+}
+
+function CheckWrongLocationError(data){
+    if (data.code === 400001){
+        throw new Error("Location not found!")
+    }
 }

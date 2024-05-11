@@ -9,6 +9,11 @@ def currentWeather (request, location):
     #Get Json file with current weather from tomorrow.io API
     CurrentWeatherJSON = requests.get(f"https://api.tomorrow.io/v4/weather/realtime?location={location}&apikey={API_key}") 
     current_weather_dict = CurrentWeatherJSON.json()
+
+    #Return Json with code 400001 when incorrect location provided
+    if "code" in current_weather_dict and current_weather_dict["code"] == 400001: 
+        return JsonResponse({"code":400001})
+    
     #Get current weather key:value pairs
     data = current_weather_dict["data"]["values"]
 
@@ -22,12 +27,20 @@ def forecast(request, location, time_frame):
     #Get forecast based on location and desired time_frame, either hourly forecast or daily forecast
     ForecastWeatherJSON = requests.get(f"https://api.tomorrow.io/v4/weather/forecast?location={location}&timesteps={time_frame}&&apikey={API_key}") 
     forecast_weather_dict = ForecastWeatherJSON.json()
+    
+    #Return Json with code 400001 when incorrect location provided
+    if "code" in forecast_weather_dict and forecast_weather_dict["code"] == 400001: 
+        return JsonResponse({"code":400001})
     #Get and array of forecast data
     data = forecast_weather_dict["timelines"]
 
     #creating empty dictionary to insert weather data of next 5 time steps and initialize array to store time steps
-    response = {}
-    response["data"] = []
+    response = {
+        "code":200,
+        "data":[]
+    }
+    #response["code"] = 
+    #response["data"] = []
 
     #Iterate over next 5 time_steps and copy desired data into new directory 
     for time_step in range(5):
@@ -44,7 +57,7 @@ def forecast(request, location, time_frame):
             #Change time format
             time_list = forecast["time"].split("T")
             time = time_list[1].replace("Z","").split(":")
-            data_time_step["time"] = time
+            data_time_step["time"] = time #time si and array
 
         #Handles data for daily forecast
         elif time_frame == "1d":
@@ -64,3 +77,5 @@ def forecast(request, location, time_frame):
 
     return JsonResponse(response)
 
+def incorrectLocation(data_dict):
+    ...
