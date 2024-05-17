@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
-import requests, json
+import requests
 
 # Create your views here.
 API_key = "5xU8FaX7CHFfRzk2UIUg7humtNxQI6tf"
@@ -11,7 +11,7 @@ def currentWeather (request, location):
     current_weather_dict = CurrentWeatherJSON.json()
 
     #Return Json with code 400001 when incorrect location provided
-    if "code" in current_weather_dict and current_weather_dict["code"] == 400001: 
+    if incorrectLocation(current_weather_dict):
         return JsonResponse({"code":400001})
     
     #Get current weather key:value pairs
@@ -29,8 +29,9 @@ def forecast(request, location, time_frame):
     forecast_weather_dict = ForecastWeatherJSON.json()
     
     #Return Json with code 400001 when incorrect location provided
-    if "code" in forecast_weather_dict and forecast_weather_dict["code"] == 400001: 
+    if incorrectLocation(forecast_weather_dict):
         return JsonResponse({"code":400001})
+
     #Get and array of forecast data
     data = forecast_weather_dict["timelines"]
 
@@ -78,4 +79,9 @@ def forecast(request, location, time_frame):
     return JsonResponse(response)
 
 def incorrectLocation(data_dict):
+    if "code" in data_dict and data_dict["code"] == 400001: 
+        return True
+    
+def suggestLocation(request, location):
+
     ...

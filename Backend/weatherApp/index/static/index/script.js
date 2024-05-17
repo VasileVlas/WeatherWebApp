@@ -1,7 +1,24 @@
 document.addEventListener("DOMContentLoaded", () => {
-    //document.querySelector("#temperature_now").innerHTML = "0"
     
-    //document.querySelectorAll("#location_input").addEventListener("")
+    document.querySelector("#location_input").addEventListener("input", () => {
+        const typed_location = GetUserLocation();
+        const dummy_data = ["Prague","London", "New York", "Las Vegas", "Brno"];
+        const URL = "`http://192.168.1.115:8000/"
+        const suggested_location = APICall(URL)
+        let datalist = document.createElement("datalist");
+        datalist.id = "location_datalist";
+        for (let i = 0; i < dummy_data.length; i++) {
+        //for(location of dummy_data) {
+            let option = document.createElement("option");
+            option.value = dummy_data[i];
+            datalist.appendChild(option);
+        }
+        document.querySelector("#location_input").setAttribute("list","location_datalist");
+        document.querySelector("#location_input").appendChild(datalist);
+        //give selection of places
+
+
+    })
 
     document.querySelector("#button-addon2").addEventListener("click", async () => {
         const API_key = "5xU8FaX7CHFfRzk2UIUg7humtNxQI6tf"
@@ -12,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return
         }
 
+        //if error occurs in async functions, stops them and displays error
         try {
             await Promise.all([
                 SetCurrentWeather(API_key, location),
@@ -30,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 //Make API request and return JSON data
 function APICall(URL) {
-    const weather_data = fetch(URL)
+    const received_data = fetch(URL)
         .then(response => {
             if (response.ok){ // handle response 200
                 return response.json()
@@ -45,7 +63,7 @@ function APICall(URL) {
             }
         })
         .catch(error => console.log("Connection error"));
-    return weather_data
+    return received_data
 }
 
 //Get user location from the input window
@@ -54,7 +72,7 @@ function GetUserLocation() {
 }
 
 async function SetCurrentWeather(API_key, location) {
-    const URL = `http://192.168.1.116:8000/api/currentweather/${location}`
+    const URL = `http://192.168.1.115:8000/api/currentweather/${location}`
     //const URL = `https://api.tomorrow.io/v4/weather/realtime?location=${location}&apikey=${API_key}`;
     const data = await APICall(URL);
     CheckWrongLocationError(data);
@@ -70,7 +88,7 @@ async function SetCurrentWeather(API_key, location) {
 }
 
 async function SetForecast(API_key, location, timesteps) {
-    const URL = `http://192.168.1.116:8000/api/forecast/${location}/${timesteps}`
+    const URL = `http://192.168.1.115:8000/api/forecast/${location}/${timesteps}`
     //const URL = `https://api.tomorrow.io/v4/weather/forecast?location=${location}&timesteps=${timesteps}&&apikey=${API_key}`;
     const data = await APICall(URL);
     CheckWrongLocationError(data);
@@ -173,8 +191,10 @@ function GetWeatherIconSource(weather_code) {
     return source
 }
 
+//Check if data JSON object has a key code and there is 
 function CheckWrongLocationError(data){
-    if (data.code === 400001){
+    if (data.hasOwnProperty("code") && data.code === 400001){
+        document.querySelector("#location_input").value = ""
         throw new Error("Location not found!")
     }
 }
