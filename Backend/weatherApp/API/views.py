@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
+from django.core import serializers
+from .models import Location
 import requests
 
 # Create your views here.
@@ -83,5 +85,8 @@ def incorrectLocation(data_dict):
         return True
     
 def suggestLocation(request, location):
-
-    ...
+    response = list(Location.objects.filter(name__icontains=f"{location}").values_list("name"))
+    response_dict = {
+        "name":response
+    }
+    return JsonResponse(response_dict)

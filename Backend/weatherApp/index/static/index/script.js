@@ -1,21 +1,35 @@
 document.addEventListener("DOMContentLoaded", () => {
     
-    document.querySelector("#location_input").addEventListener("input", () => {
+    //event displaying suggestions of the typed city
+    document.querySelector("#location_input").addEventListener("input", async () => {
+        //Get typed user location
         const typed_location = GetUserLocation();
-        const dummy_data = ["Prague","London", "New York", "Las Vegas", "Brno"];
-        const URL = "`http://192.168.1.115:8000/"
-        const suggested_location = APICall(URL)
-        let datalist = document.createElement("datalist");
-        datalist.id = "location_datalist";
-        for (let i = 0; i < dummy_data.length; i++) {
-        //for(location of dummy_data) {
-            let option = document.createElement("option");
-            option.value = dummy_data[i];
-            datalist.appendChild(option);
+        const URL = `http://192.168.1.115:8000/api/suggestlocation/${typed_location}`
+        //Call API to get a JSON object of places
+        try {
+            var suggested_location = await APICall(URL);
+            console.log(suggested_location)
         }
-        document.querySelector("#location_input").setAttribute("list","location_datalist");
-        document.querySelector("#location_input").appendChild(datalist);
-        //give selection of places
+        
+        catch(error){
+            alert(error.message);
+        }
+
+        finally {
+            let datalist = document.createElement("datalist");
+            datalist.id = "location_datalist";
+            for (let i = 0; i < suggested_location.name.length; i++) {
+            //for(location of dummy_data) {
+                let option = document.createElement("option");
+                option.value = suggested_location.name[i][0];
+                datalist.appendChild(option);
+            }
+            document.querySelector("#location_input").setAttribute("list","location_datalist");
+            document.querySelector("#location_input").appendChild(datalist);
+            //give selection of places
+    
+        }
+        
 
 
     })
