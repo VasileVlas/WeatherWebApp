@@ -82,9 +82,9 @@ DATABASES = {
     'default': {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "weatherApp",
-        "USER": "weatherAppUser",
-        "PASSWORD": "nlxb0ag8",
-        "HOST": "localhost",
+        "USER": "DatabaseUser",
+        "PASSWORD": "Nelezminaucet1",
+        "HOST": "weatherappdatabase.c7gacascihgy.us-east-1.rds.amazonaws.com",
         "PORT": "5432",
     }
 }
